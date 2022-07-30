@@ -1,0 +1,16 @@
+name: Setup age
+description: Download and make age (and age-keygen) available
+inputs:
+  version:
+    description: The `age` version to use
+    required: true
+    default: "1.0.0"
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      run: |
+        curl -Lo age.tar.gz https://github.com/FiloSottile/age/releases/download/v${{ inputs.version }}/age-v${{ inputs.version }}-linux-amd64.tar.gz
+        tar xvf age.tar.gz
+        mv age/age age/age-keygen /usr/bin
+        rm -rf age.tar.gz
