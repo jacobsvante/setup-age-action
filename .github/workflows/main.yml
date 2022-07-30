@@ -1,0 +1,43 @@
+on:
+  push:
+    branches:
+      - main
+
+env:
+  ACTION_NAME: setup-age-action
+
+name: Main
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    name: Test action
+    steps:
+      - uses: actions/checkout@v3
+      # NOTE: Obviously, `main` might refer to a different commit if one is pushed just
+      # after the relevant commit was made. Unfortunately one cannot use `github.sha`
+      # in `uses`.
+      - uses: jacobsvante/setup-age-action@main
+      - run: |
+          echo 'Shhh!' > my-secret.txt
+          AGE_PUBKEY=$(age-keygen --output key.txt 2>&1 | cut -d' ' -f3)
+          echo $AGE_PUBKEY
+          TEST_OUTPUT=$(cat my-secret.txt | age --encrypt --recipient $AGE_PUBKEY --armor | age --decrypt --identity key.txt)
+          [[ $(echo "$TEST_OUTPUT") == 'Shhh!' ]]
+        shell: bash
+  release-please:
+    runs-on: ubuntu-latest
+    needs: [test]
+    steps:
+      - uses: google-github-actions/release-please-action@v3
+        id: release
+        with:
+          release-type: simple
+          package-name: ${{ env.ACTION_NAME }}
+          bump-minor-pre-major: true
+      - uses: actions/checkout@v3
+      - name: Tag major and minor versions in Git
+        if: ${{ steps.release.outputs.release_created }}
+        uses: jacobsvante/tag-major-minor-action@v0
+        with:
+          major: ${{ steps.release.outputs.major }}
+          minor: ${{ steps.release.outputs.minor }}
