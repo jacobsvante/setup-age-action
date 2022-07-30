@@ -1,4 +1,4 @@
-name: Setup age
+name: Setup age and age-keygen
 description: Download and make age (and age-keygen) available
 inputs:
   version:
